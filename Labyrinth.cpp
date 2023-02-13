@@ -13,45 +13,46 @@ using namespace std;
 
 std::atomic<int> counter = 0;
 std::atomic<int> cupcakeFlag = 1;
-std::atomic<int> terminateThreads = 0;
-
-
+mutex m;
 
 void labyrinth(int index) {
 	bool hasSeenCupcake = false;
-	while (true) {
-		std::cout << counter << std::endl;
-
-		if (counter >= 100) {
-			return;
+	while (counter < 100) {
+		if (index == 0) {
+			m.lock();
+			if (cupcakeFlag == 1) {
+				cupcakeFlag = 0;
+				counter++;
+			}
+			m.unlock();
 		}
-
-		if (index == 0 && cupcakeFlag == 1) {
-			cupcakeFlag = 0;
-			counter++;
-		} else if (!hasSeenCupcake && cupcakeFlag == 0) {
-			cupcakeFlag = 1;
-			hasSeenCupcake = true;
+		else {
+			m.lock();
+			if (cupcakeFlag == 0 && !hasSeenCupcake) {
+				cupcakeFlag = 1;
+				hasSeenCupcake = true;
+			}
+			m.unlock();
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 }
 
 int main()
 {
 	vector<thread> threads;
-
 	for (int i = 0; i < 100; i++) {
 		threads.emplace_back(thread(labyrinth, i));
 	}
 
-	for_each(threads.begin(), threads.end(), mem_fn(&thread::join));
+	for (int i = 0; i < 100; i++) {
+		threads[i].join();
+	}
 
 	if (counter >= 100) {
-		std::cout << "Everyone entered the labyrinth at least once." << std::endl;
+		cout << "Everyone entered the labyrinth at least once." << endl;
 	}
 	else {
-		std::cout << "Everyone didn't enter the labyrinth" << std::endl;
+		cout << "Everyone didn't enter the labyrinth" << endl;
 	}
-	std::cout << counter << std::endl;
+	cout << counter << endl;
 }
