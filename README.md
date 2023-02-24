@@ -1,6 +1,6 @@
 # ParallelAssign2
 
-For problem 2 I used the third approach which uses the queue. I used a random number generator, with each number representing a guest, to fill up the queue and the loop runs until all numbers from 0 to N-1 (N is the num of threads) have entered the queue. This way a guest can enter the queue multiple times but eventually everyone will enter the queue. Only the guest that is first in line can enter the room, and they can only enter if the room is empty.
+For problem 2 I used the third approach which uses the queue. Each guest will try to enter the queue if they aren't already in it, with the chances of entering being a 50% chance. Only the guest that is first in line will try to enter the room, and they can only enter if the room is empty.
 
 ## Comparing the other approaches:
 
