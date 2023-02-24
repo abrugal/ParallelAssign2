@@ -21,6 +21,7 @@ mutex m;
 int minimum = 0;
 int maximum = 99;
 
+
 void enterRoom() {
 	m.lock();
 	threadQueue.pop();
@@ -30,37 +31,45 @@ void enterRoom() {
 
 void tryToEnterRoom(int index) {
 	bool hasEntered = false;
+	bool inQueue = false;
 
 	// Run until all threads have seen the vase
 	while (counter != 100) {
-		m.lock();
-		if (threadQueue.empty()) {
+
+		if (inQueue) {
+			m.lock();
+			int firstInLine = threadQueue.front();
 			m.unlock();
-			return;
-		}
-		int firstInLine = threadQueue.front();
-		m.unlock();
 
-		// Only first in line can enter the room
-		if (firstInLine == index) {
-			if (emptyRoom) {
-				m.lock();
-				emptyRoom = false;
-				m.unlock();
-				if (!hasEntered) {
-					hasEntered = true;
-					counter = counter + 1;
+			// Only first in line can enter the room
+			if (firstInLine == index) {
+				if (emptyRoom) {
+					m.lock();
+					emptyRoom = false;
+					m.unlock();
+					if (!hasEntered) {
+						hasEntered = true;
+						counter = counter + 1;
+					}
+
+					enterRoom();
+
+					m.lock();
+					emptyRoom = true;
+					m.unlock();
+					inQueue = false;
 				}
-
-				enterRoom();
-
-				m.lock();
-				emptyRoom = true;
-				m.unlock();
 			}
-			
 		}
-
+		else {
+			int randNum = rand() % 2 + 1;
+			if (randNum % 2 == 0) {
+				m.lock();
+				threadQueue.push(index);
+				m.unlock();
+				inQueue = true;
+			}
+		}
 	}
 }
 
@@ -73,18 +82,6 @@ int main()
 
 
 	srand(time(0));
-
-	// Queue until all threads have entered queue at least once
-	while (uniqueNumsInQueue < 100) {
-		int randNum = minimum + (std::rand() % (maximum - minimum + 1));
-
-		if (numHasBeenSelected[randNum] == 0) {
-			numHasBeenSelected[randNum] = 1;
-			uniqueNumsInQueue += 1;
-		}
-
-		threadQueue.push(randNum);
-	}
 
 	auto start = high_resolution_clock::now();
 
@@ -99,6 +96,5 @@ int main()
 	auto stop = high_resolution_clock::now();
 	std::chrono::duration<double> diff = stop - start;
 
-	cout << "Everyone saw the vase in " << diff.count() << " seconds." << endl;
-
+	std::cout << "Everyone saw the vase in " << diff.count() << " seconds." << endl;
 }
